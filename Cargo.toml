@@ -1,0 +1,18 @@
+[package]
+name = "pages-rs"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "pages"
+crate-type = ["cdylib"]
+
+[dependencies]
+http = "1.4.0"
+bytes = { version = "1.11.1", features = ["serde"] }
+napi = { version = "3.8.6", features = ["async"] }
+napi-derive = "3.5.5"
+axum = { version = "0.8.9", features = ["macros", "multipart", "ws"] }
+tower = "0.5.3"
+http-body = "1.0.1"
+http-body-util = "0.1.3"

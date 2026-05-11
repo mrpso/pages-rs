@@ -1,0 +1,12 @@
+{
+    "name": "edgeone",
+    "outputDirectory": "./public",
+    "cloudFunctions": {
+        "nodejs": {
+            "maxDuration": 60,
+            "includeFiles": [
+                "lib/*"
+            ]
+        }
+    }
+}
