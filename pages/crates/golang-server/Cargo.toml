@@ -1,0 +1,13 @@
+[package]
+name = "golang-server"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "golang_server"
+crate-type = ["cdylib"]
+
+[dependencies]
+pages-rs = { workspace = true }
+tokio = { workspace = true, features = ["net"] }
+axum = { workspace = true }

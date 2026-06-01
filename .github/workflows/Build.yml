@@ -1,0 +1,50 @@
+name: Build
+run-name: ${{ github.actor }} Build GitHub Actions 🚀
+on:
+  push:
+    tags:
+      - "v*.*.*"
+jobs:
+  build:
+    name: Build for ubuntu-latest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4 
+      - uses: dtolnay/rust-toolchain@stable
+      # - name: Test Rust Version
+      #   run: |
+      #     cargo test --all-features
+      #     cargo --version
+
+      - name: Setup Zig Compiler
+        uses: mlugg/setup-zig@v2
+        with:
+          version: 0.16.0
+
+      - name: Install cargo-zigbuild
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-zigbuild
+          
+      # - name: Build Dynamic Library
+      #   run: |
+      #     cargo zigbuild --release --target x86_64-unknown-linux-gnu.2.17
+      #     cp ./target/x86_64-unknown-linux-gnu/release/libpages.so ./pages.node
+      #     cp ./pages.node ./pages/edgeone/pages.node
+      
+      - name: Build Edgeone Nodejs
+        run: |
+          cargo zigbuild --release --lib --manifest-path ./pages/edgeone-tcp/Cargo.toml --target x86_64-unknown-linux-gnu.2.17
+          cp ./pages/edgeone-tcp/target/x86_64-unknown-linux-gnu/release/libpages.so ./pages/edgeone-tcp/pages/pages.node
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: pages.node
+                  
+      - name: Deploy to EdgeOne Pages
+        uses: TencentEdgeOne/edgeone-pages-action@v1
+        with:
+          token: ${{ secrets.EDGEONE_API_TOKEN }}
+          project-name: "mypages-rs"
+          build-path: "./pages/edgeone"

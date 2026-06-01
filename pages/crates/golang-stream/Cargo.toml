@@ -1,0 +1,11 @@
+[package]
+name = "golang-stream"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "golang_stream"
+crate-type = ["cdylib"]
+
+
+[dependencies]

@@ -1,10 +1,12 @@
-use std::{collections::HashMap, sync::LazyLock};
+use std::{collections::HashMap, sync::OnceLock};
 
-use axum::{Router, body::Body, routing::get};
+use axum::{Router, body::Body};
 use http_body_util::BodyExt;
 use napi::bindgen_prelude::Buffer;
 use napi_derive::napi;
 use tower::ServiceExt;
+
+static ROUTER: OnceLock<Router> = OnceLock::new();
 
 #[napi(object)]
 pub struct Request {
@@ -21,17 +23,11 @@ pub struct Response {
     pub body: Option<Buffer>,
 }
 
-static APP: LazyLock<Router> = LazyLock::new(|| {
-    println!("构建 App 路由！");
-    Router::new()
-        .route("/api/abc", get(|| async { "Hello, abc!" }))
-        .route("/api/efg", get(|| async { "Hello, efg!" }))
-        .route("/api/hello", get(|| async { "Hello, world!" }))
-        .with_state(0)
-});
-
 #[napi]
 pub async fn http(req: Request) -> Response {
+
+    // let router = ROUTER.get_or_init(|| pages::router());
+    let router = ROUTER.get_or_init(|| Router::new());
     let mut builder = http::Request::builder()
         .method(req.method.as_bytes())
         .uri(req.url.as_bytes());
@@ -45,7 +41,7 @@ pub async fn http(req: Request) -> Response {
 
     println!("Request: {:#?}", request);
 
-    let response = APP.clone().oneshot(request).await.unwrap();
+    let response = router.clone().oneshot(request).await.unwrap();
     Response {
         status: response.status().as_u16(),
         headers: response
@@ -57,5 +53,30 @@ pub async fn http(req: Request) -> Response {
             Ok(collected) => Some(Buffer::from(collected.to_bytes().to_vec())),
             Err(_) => None,
         },
+    }
+}
+
+// impl From<Request> for http::Request<Body> {
+//     fn from(value: Request) -> Self {
+//         let mut request = http::Request::builder();
+
+//         let a = request.headers_mut();
+
+//         todo!()
+//     }
+// }
+
+impl Request {
+    pub fn http(self) -> http::Request<Body> {
+        let mut builder = http::Request::builder()
+            .method(self.method.as_bytes())
+            .uri(self.url.as_bytes());
+
+        for (key, value) in self.headers {
+            builder = builder.header(key, value);
+        }
+
+        let body = Body::from(self.body.map(|x| x.to_vec()).unwrap_or_default());
+        builder.body(body).unwrap()
     }
 }

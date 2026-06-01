@@ -1,0 +1,13 @@
+name: Build
+run-name: ${{ github.actor }} Build GitHub Actions 🚀
+on:
+  push:
+    tags:
+      - "pages-rs-v*.*.*"
+jobs:
+  build:
+    name: Build for ubuntu-latest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable

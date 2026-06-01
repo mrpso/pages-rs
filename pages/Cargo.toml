@@ -1,0 +1,15 @@
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.dependencies]
+# pages-rs = { git = "https://github.com/mrpso/pages-rs.git" }
+pages-rs = { path = "../lib" }
+tokio = "1.52"
+axum = "0.8.9"
+napi = "3.8.6"
+napi-derive = "3.5.5"
+tower = "0.5.3"
+http = "1.4.0"
+http-body = "1.0.1"
+http-body-util = "0.1.3"

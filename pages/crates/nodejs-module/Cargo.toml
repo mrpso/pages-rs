@@ -1,0 +1,18 @@
+[package]
+name = "nodejs-module"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "nodejs_module"
+crate-type = ["cdylib"]
+
+[dependencies]
+axum = { workspace = true }
+pages-rs = { workspace = true }
+napi = { workspace = true }
+napi-derive = { workspace = true }
+tower = { workspace = true }
+http.workspace = true
+http-body.workspace = true
+http-body-util.workspace = true

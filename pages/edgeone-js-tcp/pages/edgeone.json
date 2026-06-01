@@ -1,0 +1,11 @@
+{
+    "outputDirectory": "./public",
+    "cloudFunctions": {
+        "nodejs": {
+            "maxDuration": 60,
+            "includeFiles": [
+                "pages.node"
+            ]
+        }
+    }
+}

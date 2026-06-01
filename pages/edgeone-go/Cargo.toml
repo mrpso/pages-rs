@@ -1,0 +1,10 @@
+[package]
+name = "edgeone-go"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "pages"
+crate-type = ["cdylib"]
+
+[dependencies]

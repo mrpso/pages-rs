@@ -1,0 +1,7 @@
+{
+    "cloudFunctions": {
+        "go": {
+            "maxDuration": 60
+        }
+    }
+}

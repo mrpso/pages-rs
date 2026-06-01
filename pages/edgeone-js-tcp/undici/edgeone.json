@@ -1,11 +1,11 @@
 {
-    "name": "edgeone",
     "outputDirectory": "./public",
+    "nodeVersion": "22.17.1",
     "cloudFunctions": {
         "nodejs": {
             "maxDuration": 60,
             "includeFiles": [
-                "lib/*"
+                "pages.node"
             ]
         }
     }

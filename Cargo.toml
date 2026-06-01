@@ -1,18 +1,18 @@
+[workspace]
+members = ["lib"]
+exclude = ["pages", "example"]
+
 [package]
-name = "pages-rs"
+name = "pages-cli"
 version = "0.1.0"
 edition = "2024"
 
-[lib]
+[[bin]]
 name = "pages"
-crate-type = ["cdylib"]
+path = "src/main.rs"
 
 [dependencies]
-http = "1.4.0"
-bytes = { version = "1.11.1", features = ["serde"] }
-napi = { version = "3.8.6", features = ["async"] }
-napi-derive = "3.5.5"
-axum = { version = "0.8.9", features = ["macros", "multipart", "ws"] }
-tower = "0.5.3"
-http-body = "1.0.1"
-http-body-util = "0.1.3"
+clap = { version = "4.6.1", features = ["derive"] }
+zip = "8.6.0"
+include_dir = "0.7.4"
+walkdir = "2.5.0"

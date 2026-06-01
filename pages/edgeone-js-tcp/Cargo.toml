@@ -1,0 +1,15 @@
+[package]
+name = "edgeone-tcp"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "pages"
+crate-type = ["cdylib"]
+
+[dependencies]
+pages = { path = "../../", package = "pages-rs" }
+napi = { version = "3.8.6", features = ["async"] }
+napi-derive = "3.5.5"
+axum = { version = "0.8.9" }
+tokio = { version = "1.52.3", features = ["net"] }
