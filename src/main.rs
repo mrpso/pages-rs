@@ -196,7 +196,8 @@ fn handle_pack(path: &Path) -> io::Result<()> {
 
     // 💥 第五：运行 cargo zigbuild 构建动态库
     println!("🏗️ 正在使用 zigbuild 进行 x86_64 跨平台 Linux 编译...");
-    let build_status = Command::new("cargo-zigbuild")
+    let build_status = Command::new("cargo")
+        .arg("zigbuild")
         .arg("--release")
         .arg("--lib")
         .arg("--manifest-path")
