@@ -12,7 +12,16 @@ name = "pages"
 path = "src/main.rs"
 
 [dependencies]
-clap = { version = "4.6.1", features = ["derive"] }
-zip = "8.6.0"
 include_dir = "0.7.4"
 walkdir = "2.5.0"
+toml_edit = "0.25.12"
+
+[dependencies.clap]
+version = "4.6.1"
+default-features = false
+features = ["derive", "std", "help"]
+
+[dependencies.zip]
+version = "8.6.0"
+default-features = false
+features = ["deflate"]

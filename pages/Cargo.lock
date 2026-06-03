@@ -175,6 +175,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "example"
+version = "0.1.0"
+dependencies = [
+ "axum",
+]
+
+[[package]]
 name = "form_urlencoded"
 version = "1.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -541,6 +548,7 @@ name = "nodejs-stream"
 version = "0.1.0"
 dependencies = [
  "axum",
+ "example",
  "napi",
  "napi-derive",
  "pages-rs",

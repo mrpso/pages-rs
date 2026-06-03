@@ -1,6 +1,6 @@
 use clap::Parser;
 use include_dir::{Dir, include_dir};
-use std::env;
+use std::env::current_dir;
 use std::fs::{self, File};
 use std::io;
 use std::path::{Path, PathBuf};
@@ -10,6 +10,7 @@ use zip::write::SimpleFileOptions;
 
 // static TEMPLATES_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/templates");
 static PAGES_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/pages");
+static CARGO_FILE: &str = include_str!("../pages/Cargo.toml");
 
 #[derive(Debug, Parser)]
 #[command(name = "pages")]
@@ -36,8 +37,6 @@ fn main() {
     // 🔥 核心修改：直接解析顶层命令
     let cli = Cli::parse();
 
-    println!("Cli: {:#?}", cli);
-
     match cli {
         Cli::New { path, args } => {
             if let Err(e) = handle_new(&path, args) {
@@ -45,8 +44,8 @@ fn main() {
                 std::process::exit(1);
             }
         }
-        Cli::Pack { .. } => {
-            if let Err(e) = handle_pack() {
+        Cli::Pack { path } => {
+            if let Err(e) = handle_pack(&path) {
                 eprintln!("❌ 打包失败: {}", e);
                 std::process::exit(1);
             }
@@ -104,17 +103,46 @@ fn handle_new(path: &str, args: Vec<String>) -> io::Result<()> {
 }
 
 // ==================== 2. PACK 子命令处理 ====================
-fn handle_pack() -> io::Result<()> {
+fn handle_pack(path: &Path) -> io::Result<()> {
     // 💥 第一：判断当前系统是否为 Linux
-    if env::consts::OS != "linux" {
+    if std::env::consts::OS != "linux" {
         return Err(io::Error::new(
             io::ErrorKind::Unsupported,
             format!(
                 "当前系统为「{}」，本命令仅支持在 Linux 系统下运行构建",
-                env::consts::OS
+                std::env::consts::OS
             ),
         ));
     }
+
+    let package = match std::fs::read_to_string(path.join("Cargo.toml")) {
+        Ok(content) => match content.parse::<toml_edit::DocumentMut>() {
+            Ok(document) => match document["package"]["name"].as_str() {
+                Some(package) => package.to_string(),
+                None => {
+                    return Err(io::Error::new(
+                        io::ErrorKind::Other,
+                        "Cargo.toml 文件中未找到 package.name 字段",
+                    ));
+                }
+            },
+            Err(e) => {
+                return Err(io::Error::new(
+                    io::ErrorKind::Other,
+                    format!("Cargo.toml 文件解析失败: {}", e),
+                ));
+            }
+        },
+        Err(_) => {
+            return Err(io::Error::new(
+                io::ErrorKind::NotFound,
+                format!(
+                    "未找到 Cargo.toml 文件，请确保在 {} 目录下运行",
+                    path.display()
+                ),
+            ));
+        }
+    };
 
     // 💥 第二：判断当前系统是否有 zig 构建环境
     println!("🔍 检查 Zig 环境...");
@@ -128,10 +156,7 @@ fn handle_pack() -> io::Result<()> {
 
     // 💥 第三：判断并安装 cargo-zigbuild
     println!("🔍 检查 cargo-zigbuild 工具...");
-    let zigbuild_check = Command::new("cargo")
-        .arg("zigbuild")
-        .arg("--version")
-        .output();
+    let zigbuild_check = Command::new("cargo-zigbuild").arg("--version").output();
     if zigbuild_check.is_err() || !zigbuild_check.unwrap().status.success() {
         println!("🛠️ 未检测到 cargo-zigbuild，正在通过 cargo install 安装...");
         let install_status = Command::new("cargo")
@@ -161,10 +186,17 @@ fn handle_pack() -> io::Result<()> {
     println!("📂 正在释放内置核心 pages 模块到构建目录...");
     extract_dir(&PAGES_DIR, target_pages_dir)?;
 
+    let mut workspace = CARGO_FILE.parse::<toml_edit::DocumentMut>().unwrap();
+
+    let pages = &mut workspace["workspace"]["dependencies"]["pages"];
+    pages["path"] = toml_edit::value(current_dir()?.join(path).display().to_string());
+    pages["package"] = toml_edit::value(package);
+
+    std::fs::write(target_pages_dir.join("Cargo.toml"), workspace.to_string())?;
+
     // 💥 第五：运行 cargo zigbuild 构建动态库
     println!("🏗️ 正在使用 zigbuild 进行 x86_64 跨平台 Linux 编译...");
-    let build_status = Command::new("cargo")
-        .arg("zigbuild")
+    let build_status = Command::new("cargo-zigbuild")
         .arg("--release")
         .arg("--lib")
         .arg("--manifest-path")
@@ -176,7 +208,7 @@ fn handle_pack() -> io::Result<()> {
     if !build_status.success() {
         return Err(io::Error::new(
             io::ErrorKind::Other,
-            "cargo zigbuild 编译流程出错",
+            "cargo-zigbuild 编译流程出错",
         ));
     }
 
@@ -192,11 +224,8 @@ fn handle_pack() -> io::Result<()> {
     fs::copy(&edgeone_so, &edgeone_node)?;
 
     // 💥 第七：打包文件为 zip 包
-    let edgeone_zip = target_pages_dir.join("pages.zip");
-    println!(
-        "🗜️ 正在将生产制品打包为密闭 ZIP 归档: {:?}",
-        edgeone_zip
-    );
+    let edgeone_zip = target_pages_dir.join("edgeone.zip");
+    println!("🗜️ 正在将生产制品打包为密闭 ZIP 归档: {:?}", edgeone_zip);
     zip_directory(&edgeone_dir, &edgeone_zip)?;
 
     println!("🎉 完美的自动化构建完成！制品已生成：{:?}", edgeone_zip);

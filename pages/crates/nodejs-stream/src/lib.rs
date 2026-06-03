@@ -3,7 +3,6 @@ use std::{
     sync::LazyLock,
 };
 
-use axum::{Router, routing::get};
 use napi::bindgen_prelude::*;
 use tokio::{net::*, runtime::Runtime};
 
@@ -12,25 +11,11 @@ pub enum Channel {
     TCP(SocketAddr),
 }
 
-// 必须存在此函数 否则 Pages 找不到路由
-pub fn router() -> Router {
-    Router::new()
-        .route("/pages", get(|| async { 
-            println!("Hello, Pages!");
-            "Hello, Pages!"
-         }))
-        .route("/rust", get(|| async {
-            println!("Hello, Rust!");
-            "Hello, Rust!"
-         }))
-}
-
 static RUNTIME: LazyLock<Runtime> = LazyLock::new(|| Runtime::new().unwrap());
 static CHANNEL: LazyLock<Channel> = LazyLock::new(|| {
     let instant = std::time::Instant::now();
     RUNTIME.block_on(async {
-        // let router = pages::router();
-        let router = router();
+        let router = pages::router();
 
         #[cfg(any(unix, windows))]
         {
@@ -42,7 +27,10 @@ static CHANNEL: LazyLock<Channel> = LazyLock::new(|| {
             };
 
             let path = match true {
-                cfg!(unix) => format!("/tmp/pages-{}", random),
+                cfg!(unix) => std::env::temp_dir()
+                    .join(format!("pages-{}", random))
+                    .display()
+                    .to_string(),
                 cfg!(windows) => format!(r"\\.\pipe\pages-{}", random),
             };
 
